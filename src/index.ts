@@ -3,49 +3,55 @@ import { assign, createActor, createMachine, sendTo } from "xstate";
 const binaryGateMachine = createMachine({
   tsTypes: {} as import("./index.typegen").Typegen0,
   id: "binary-gate",
-  on: {
-    SIGNAL: {
-      actions: ({ event }) => {
-        console.log("received");
+
+  initial: "Waiting",
+  context: {
+    left: undefined,
+    right: undefined,
+    operator: undefined,
+  },
+  states: {
+    Waiting: {
+      entry: [
+        assign({
+          left: ({ event }) => event.input.left,
+          right: ({ event }) => event.input.right,
+          operator: ({ event }) => event.input.operator,
+        }),
+      ],
+      on: {
+        SIGNAL: {
+          target: "Waiting",
+          actions: [
+            assign(({ event }) => {
+              return {
+                [event.position]: event.value,
+              };
+            }),
+          ],
+        },
       },
+      always: [
+        {
+          target: "Done",
+          guard: ({ context }) => {
+            const { left, right, operator } = context;
+
+            if (operator === undefined)
+              throw new Error("BinaryGate - init without operator");
+
+            if (!Number.isInteger(left) || !Number.isInteger(right)) return false;
+
+            return true;
+          },
+        },
+      ],
+    },
+    Done: {
+      // TODO: spanw output signal
+      type: "final",
     },
   },
-  // initial: "Waiting",
-  // context: {
-  //   left: undefined,
-  //   right: undefined,
-  //   operator: undefined,
-  // },
-  // states: {
-  //   Waiting: {
-  //     entry: [
-  //       assign({
-  //         left: ({ event }) => event.input.left,
-  //         right: ({ event }) => event.input.right,
-  //         operator: ({ event }) => event.input.operator,
-  //       }),
-  //     ],
-  //     on: {
-  //       SIGNAL: [
-  //         {
-  //           target: "Done",
-  //           guard: ({ context, event }) => {
-  //             const { left, right, operator } = context;
-
-  //             if (operator === undefined)
-  //               throw new Error("BinaryGate - init without operator");
-
-  //             if (left || right) return false;
-  //             return true;
-  //           },
-  //         },
-  //       ],
-  //     },
-  //   },
-  //   Done: {
-  //     type: "final",
-  //   },
-  // },
 });
 
 const signalMachine = createMachine({
@@ -54,6 +60,7 @@ const signalMachine = createMachine({
   initial: "Waiting",
   context: {
     target: undefined,
+    position: undefined,
     value: undefined,
   },
   states: {
@@ -61,6 +68,7 @@ const signalMachine = createMachine({
       entry: [
         assign({
           target: ({ event }) => event.input.target,
+          position: ({ event }) => event.input.position,
           value: ({ event }) => event.input.value,
         }),
       ],
@@ -71,8 +79,9 @@ const signalMachine = createMachine({
         sendTo(
           ({ context, system }) => system.get(context.target || ""),
           ({ context, self }) => ({
-            type: 'SIGNAL',
+            type: "SIGNAL",
             value: context.value,
+            position: context.position,
             origin: self,
           })
         ),
@@ -98,10 +107,10 @@ const parentMachine = createMachine({
       ],
       signalRefs: ({ spawn }) => [
         spawn("signal", {
-          input: { target: "a", value: 0 },
+          input: { target: "a", position: "left", value: 0 },
         }),
         spawn("signal", {
-          input: { target: "a", value: 1 },
+          input: { target: "a", position: "right", value: 1 },
         }),
       ],
     }),

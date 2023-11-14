@@ -27,7 +27,7 @@
         eventsCausingServices: {
           
         };
-        matchesStates: undefined;
+        matchesStates: "Done" | "Waiting";
         tags: never;
       }
 
