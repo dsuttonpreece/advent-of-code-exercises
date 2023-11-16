@@ -1,4 +1,4 @@
-import { assign, createActor, createMachine, sendTo } from "xstate";
+import { assign, createActor, createMachine, raise, sendTo } from "xstate";
 
 import { logContext } from "./utils";
 
@@ -41,6 +41,28 @@ const parentMachine = createMachine({
           wiresIn: ["x", "y"],
           operator: "OR",
           wireOut: "e",
+        },
+      },
+    },
+    gateLShiftX2: {
+      invoke: {
+        src: "gateMachine",
+        input: {
+          wiresIn: ["x"],
+          in: [undefined, 2],
+          operator: "LSHIFT",
+          wireOut: "f",
+        },
+      },
+    },
+    gateRShiftY2: {
+      invoke: {
+        src: "gateMachine",
+        input: {
+          wiresIn: ["y"],
+          in: [undefined, 2],
+          operator: "RSHIFT",
+          wireOut: "g",
         },
       },
     },
@@ -93,6 +115,7 @@ const parentMachine = createMachine({
             wiresIn: ({ event }) => event.input.wiresIn,
             wireOut: ({ event }) => event.input.wireOut,
             operator: ({ event }) => event.input.operator,
+            in: ({ event }) => event.input.in,
           }),
         ],
         states: {
@@ -139,8 +162,13 @@ const parentMachine = createMachine({
             always: [
               {
                 target: "Calculating",
-                guard: ({ context }) =>
-                  context.in?.length === context.wiresIn?.length,
+                guard: ({ context }) => {
+                  const areAllInputsNumbers = context.in?.map((value) =>
+                    Number.isInteger(value)
+                  ).every(Boolean);
+
+                  return Boolean(areAllInputsNumbers)
+                },
               },
             ],
           },
@@ -161,6 +189,10 @@ const parentMachine = createMachine({
                           return left & right;
                         case "OR":
                           return left | right;
+                        case "LSHIFT":
+                          return left << right;
+                        case "RSHIFT":
+                          return left >> right;
                         default:
                           return undefined;
                       }
