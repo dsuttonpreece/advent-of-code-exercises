@@ -182,7 +182,7 @@ const parentMachine = createMachine({
         Done: {
           type: "final",
           entry: [
-            ({ context, self }) => {
+            ({ context }) => {
               context.connections.map((reply) => {
                 reply.actor.send({ ...reply, out: context.input });
               });
@@ -200,10 +200,9 @@ const parentMachine = createMachine({
       entry: [
         sendTo(
           ({ event, system }) => system.get(event.input.wireOut),
-          ({ event, self }) => ({
+          ({ event }) => ({
             type: "INPUT",
             out: event.input.out,
-            self,
           })
         ),
       ],
