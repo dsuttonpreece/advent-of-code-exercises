@@ -187,7 +187,7 @@ const parentMachine = createMachine({
 
                       switch (context.operator) {
                         case "NOT":
-                          return ~left; // TODO: weird js bitwise result
+                          return new Uint16Array([~left])[0]
                         case "AND":
                           return left & right;
                         case "OR":
