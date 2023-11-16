@@ -163,11 +163,14 @@ const parentMachine = createMachine({
               {
                 target: "Calculating",
                 guard: ({ context }) => {
-                  const areAllInputsNumbers = context.in?.map((value) =>
-                    Number.isInteger(value)
-                  ).every(Boolean);
+                  const areAllInputsNumbers = context.in
+                    ?.map((value) => Number.isInteger(value))
+                    .every(Boolean);
 
-                  return Boolean(areAllInputsNumbers)
+                  const areThereMoreInputsThanWires =
+                    context.in?.length >= context.wiresIn.length;
+
+                  return areAllInputsNumbers && areThereMoreInputsThanWires;
                 },
               },
             ],
@@ -258,22 +261,52 @@ const parentMachine = createMachine({
         },
       },
     }),
-    signalMachine: createMachine({
-      id: "signal",
-      context: {} as {
-        wireOut: string;
-        out: number;
+    signalMachine: createMachine(
+      {
+        /** @xstate-layout N4IgpgJg5mDOIC5SwJZQHYEMA2A6ACmOhCulAMQDaADALqKgAOA9qgC4rPoMgAeiARgCsQ3ABYAbNQCcYgBwBmaQCYRy5QHYANCACegudVzKx06XNMCBy6RKEBfRzvTMIcHqgw4eLdp25IfIgAtBI6+gjBomYxsbFyEk4gnlh4hMSkUD6sKBxcPPwIYsrhghrSxkLU1RryYiLUQhpJKTi4ACJcYNl++YGFqkZCknIq1RJiCgJyQqUIwmLi8ULqGuXSjo5AA */
+        id: "signal",
+        context: {} as {
+          wireOut: string;
+          out: number;
+        },
+        initial: "Pending",
+        entry: [
+          assign({
+            wireOut: ({ event }) => event.input.wireOut,
+            out: ({ event }) => event.input.out,
+          }),
+        ],
+        states: {
+          Pending: {
+            always: [
+              {
+                target: "Done",
+                guard: ({ context }) => typeof context.out == "number",
+              },
+            ],
+          },
+          Done: {
+            type: "final",
+            entry: [
+              "logContext",
+
+              sendTo(
+                ({ context, system }) => system.get(context.wireOut),
+                ({ context }) => ({
+                  type: "INPUT",
+                  out: context.out,
+                })
+              ),
+            ],
+          },
+        },
       },
-      entry: [
-        sendTo(
-          ({ event, system }) => system.get(event.input.wireOut),
-          ({ event }) => ({
-            type: "INPUT",
-            out: event.input.out,
-          })
-        ),
-      ],
-    }),
+      {
+        actions: {
+          logContext,
+        },
+      }
+    ),
   },
 });
 
