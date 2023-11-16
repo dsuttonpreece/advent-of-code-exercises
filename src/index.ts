@@ -41,7 +41,7 @@ const parentMachine = createMachine({
         src: "signalMachine",
         input: {
           wireOut: "x",
-          value: 123,
+          out: 123,
         },
       },
     },
@@ -50,7 +50,7 @@ const parentMachine = createMachine({
         src: "signalMachine",
         input: {
           wireOut: "y",
-          value: 456,
+          out: 456,
         },
       },
     },
@@ -98,7 +98,7 @@ const parentMachine = createMachine({
                   assign({
                     in: ({ context, event }) => {
                       const newInput = [...(context.in || [])];
-                      newInput[event.position] = event.value;
+                      newInput[event.position] = event.out;
                       return newInput;
                     },
                   }),
@@ -173,7 +173,7 @@ const parentMachine = createMachine({
               target: "Done",
               actions: [
                 assign({
-                  input: ({ event }) => event.value,
+                  input: ({ event }) => event.out,
                 }),
               ],
             },
@@ -184,7 +184,7 @@ const parentMachine = createMachine({
           entry: [
             ({ context, self }) => {
               context.connections.map((reply) => {
-                reply.actor.send({ ...reply, value: context.input });
+                reply.actor.send({ ...reply, out: context.input });
               });
             },
           ],
@@ -194,15 +194,15 @@ const parentMachine = createMachine({
     signalMachine: createMachine({
       id: "signal",
       context: {} as {
-        value: number;
         wireOut: string;
+        out: number;
       },
       entry: [
         sendTo(
           ({ event, system }) => system.get(event.input.wireOut),
           ({ event, self }) => ({
             type: "INPUT",
-            value: event.input.value,
+            out: event.input.out,
             self,
           })
         ),
