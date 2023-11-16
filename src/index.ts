@@ -28,9 +28,9 @@ const parentMachine = createMachine({
       invoke: {
         src: "gateMachine",
         input: {
-          sources: ["x"],
+          wiresIn: ["x"],
           operator: "NOT",
-          target: "h",
+          wireOut: "h",
         },
       },
     },
@@ -40,7 +40,7 @@ const parentMachine = createMachine({
       invoke: {
         src: "signalMachine",
         input: {
-          target: "x",
+          wireOut: "x",
           value: 123,
         },
       },
@@ -49,7 +49,7 @@ const parentMachine = createMachine({
       invoke: {
         src: "signalMachine",
         input: {
-          target: "y",
+          wireOut: "y",
           value: 456,
         },
       },
@@ -63,22 +63,22 @@ const parentMachine = createMachine({
         initial: "Pending",
         context: {} as {
           operator: string;
-          sources: any[];
+          wiresIn: any[];
           inputs: number[];
-          target: string;
+          wireOut: string;
         },
         entry: [
           assign({
-            sources: ({ event }) => event.input.sources,
+            wiresIn: ({ event }) => event.input.wiresIn,
             operator: ({ event }) => event.input.operator,
-            target: ({ event }) => event.input.target,
+            wireOut: ({ event }) => event.input.wireOut,
           }),
         ],
         states: {
           Pending: {
             entry: [
               sendTo(
-                ({ context, system }) => system.get(context.sources[0]),
+                ({ context, system }) => system.get(context.wiresIn[0]),
                 ({ self }) => ({
                   type: "ADD_CONNECTION",
                   reply: {
@@ -107,7 +107,7 @@ const parentMachine = createMachine({
               {
                 target: "Done",
                 guard: ({ context }) =>
-                  context.inputs?.length === context.sources?.length,
+                  context.inputs?.length === context.wiresIn?.length,
               },
             ],
           },
@@ -170,11 +170,11 @@ const parentMachine = createMachine({
       id: "signal",
       context: {} as {
         value: number;
-        target: string;
+        wireOut: string;
       },
       entry: [
         sendTo(
-          ({ event, system }) => system.get(event.input.target),
+          ({ event, system }) => system.get(event.input.wireOut),
           ({ event, self }) => ({
             type: "INPUT",
             value: event.input.value,
