@@ -7,13 +7,15 @@
           "xstate.init": { type: "xstate.init" };
         };
         invokeSrcNameMap: {
-          
+          "gateMachine": "done.invoke.parent.gateNotX:invocation[0]";
+"signalMachine": "done.invoke.parent.signal123:invocation[0]" | "done.invoke.parent.signal456:invocation[0]";
+"wireMachine": "done.invoke.parent.wireX:invocation[0]" | "done.invoke.parent.wireY:invocation[0]";
         };
         missingImplementations: {
           actions: never;
           delays: never;
           guards: never;
-          services: never;
+          services: "gateMachine" | "signalMachine" | "wireMachine";
         };
         eventsCausingActions: {
           
@@ -25,9 +27,11 @@
           
         };
         eventsCausingServices: {
-          
+          "gateMachine": "xstate.init";
+"signalMachine": "xstate.init";
+"wireMachine": "xstate.init";
         };
-        matchesStates: undefined;
+        matchesStates: "gateNotX" | "signal123" | "signal456" | "wireX" | "wireY";
         tags: never;
       }
   
