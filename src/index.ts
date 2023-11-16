@@ -24,6 +24,26 @@ const parentMachine = createMachine({
     },
 
     // Gates
+    gateXandY: {
+      invoke: {
+        src: "gateMachine",
+        input: {
+          wiresIn: ["x", "y"],
+          operator: "AND",
+          wireOut: "d",
+        },
+      },
+    },
+    gateXorY: {
+      invoke: {
+        src: "gateMachine",
+        input: {
+          wiresIn: ["x", "y"],
+          operator: "OR",
+          wireOut: "e",
+        },
+      },
+    },
     gateNotX: {
       invoke: {
         src: "gateMachine",
@@ -89,6 +109,17 @@ const parentMachine = createMachine({
                   },
                 })
               ),
+              sendTo(
+                ({ context, system }) => system.get(context.wiresIn[1]),
+                ({ self }) => ({
+                  type: "ADD_CONNECTION",
+                  reply: {
+                    type: "RESOLVE_SOURCE_TO_INPUT",
+                    position: 1,
+                    actor: self,
+                  },
+                })
+              ),
             ],
             on: {
               RESOLVE_SOURCE_TO_INPUT: {
@@ -126,6 +157,10 @@ const parentMachine = createMachine({
                       switch (context.operator) {
                         case "NOT":
                           return ~left; // TODO: weird js bitwise result
+                        case "AND":
+                          return left & right;
+                        case "OR":
+                          return left | right;
                         default:
                           return undefined;
                       }
