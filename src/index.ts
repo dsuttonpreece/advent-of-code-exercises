@@ -62,16 +62,17 @@ const parentMachine = createMachine({
         id: "gate",
         initial: "Pending",
         context: {} as {
-          operator: string;
           wiresIn: any[];
-          inputs: number[];
           wireOut: string;
+          operator: string;
+          in: any[];
+          out?: number;
         },
         entry: [
           assign({
             wiresIn: ({ event }) => event.input.wiresIn,
-            operator: ({ event }) => event.input.operator,
             wireOut: ({ event }) => event.input.wireOut,
+            operator: ({ event }) => event.input.operator,
           }),
         ],
         states: {
@@ -91,11 +92,12 @@ const parentMachine = createMachine({
             ],
             on: {
               RESOLVE_SOURCE_TO_INPUT: {
+                reenter: true,
                 target: "Pending",
                 actions: [
                   assign({
-                    inputs: ({ context, event }) => {
-                      const newInput = [...context.inputs || []];
+                    in: ({ context, event }) => {
+                      const newInput = [...(context.in || [])];
                       newInput[event.position] = event.value;
                       return newInput;
                     },
@@ -105,9 +107,31 @@ const parentMachine = createMachine({
             },
             always: [
               {
-                target: "Done",
+                target: "Calculating",
                 guard: ({ context }) =>
-                  context.inputs?.length === context.wiresIn?.length,
+                  context.in?.length === context.wiresIn?.length,
+              },
+            ],
+          },
+          Calculating: {
+            always: [
+              {
+                target: "Done",
+                actions: [
+                  assign({
+                    out: ({ context }) => {
+                      const left = context.in[0];
+                      const right = context.in[1];
+
+                      switch (context.operator) {
+                        case "NOT":
+                          return ~left; // TODO: weird js bitwise result
+                        default:
+                          return undefined;
+                      }
+                    },
+                  }),
+                ],
               },
             ],
           },
@@ -134,6 +158,7 @@ const parentMachine = createMachine({
         Pending: {
           on: {
             ADD_CONNECTION: {
+              reenter: true,
               target: "Pending",
               actions: [
                 assign({
