@@ -182,8 +182,7 @@ const parentMachine = createMachine({
                 actions: [
                   assign({
                     out: ({ context }) => {
-                      const left = context.in[0];
-                      const right = context.in[1];
+                      const [left, right] = context.in;
 
                       switch (context.operator) {
                         case "NOT":
