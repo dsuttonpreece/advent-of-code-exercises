@@ -1,4 +1,4 @@
-const operators = ["AND", "OR", "LSHIFT", "RSHIFT", "NOT"] as const;
+const operators = ["AND", "OR", "LSHIFT", "RSHIFT", "NOT", 'NOOP'] as const;
 
 const buildSignalInvocation = (initialContext: {
   wireOut: string;
@@ -26,8 +26,8 @@ const buildWireInvocation = (id) => {
         src: "wireMachine",
         systemId: id,
         input: {
-          id
-        }
+          id,
+        },
       },
     },
   };
@@ -48,7 +48,7 @@ const buildGateInvocation = (initialContext: {
   } else {
     wiresIn[0] = left;
   }
-  
+
   if (right?.match(/^\d+$/)) {
     valuesIn[1] = parseInt(right);
   } else {
@@ -81,17 +81,39 @@ export function generateMachineSpecFromInstructions(instructionsRaw: string) {
 
       switch (pieces.length) {
         case 1:
-          return {
-            ...acc,
-            wires: [...acc.wires, buildWireInvocation(wireOut)],
-            signals: [
-              ...acc.signals,
-              buildSignalInvocation({
-                wireOut,
-                out: parseInt(pieces[0]),
-              }),
-            ],
-          };
+          if (pieces[0].match(/^\d+$/)) {
+            // Signal
+            return {
+              ...acc,
+              wires: [...acc.wires, buildWireInvocation(wireOut)],
+              signals: [
+                ...acc.signals,
+                buildSignalInvocation({
+                  wireOut,
+                  out: parseInt(pieces[0]),
+                }),
+              ],
+            };
+          } else {
+            // Passthrough
+            return {
+              ...acc,
+              wires: [
+                ...acc.wires,
+                buildWireInvocation(pieces[0]),
+                buildWireInvocation(wireOut),
+              ],
+              gates: [
+                ...acc.gates,
+                buildGateInvocation({
+                  wiresIn: [pieces[0]],
+                  operator: "NOOP",
+                  wireOut,
+                }),
+              ],
+            };
+          }
+
         case 2:
           return {
             ...acc,

@@ -196,20 +196,32 @@ export const gateMachine = createMachine({
               out: ({ context }) => {
                 const [left, right] = context.in;
 
+                let result;
+
                 switch (context.operator) {
                   case "NOT":
-                    return new Uint16Array([~left])[0];
+                    result = new Uint16Array([~left])[0];
+                    break;
                   case "AND":
-                    return left & right;
+                    result = left & right;
+                    break;
                   case "OR":
-                    return left | right;
+                    result = left | right;
+                    break;
                   case "LSHIFT":
-                    return left << right;
+                    result = left << right;
+                    break;
                   case "RSHIFT":
-                    return left >> right;
+                    result = left >> right;
+                    break;
+                  case "NOOP":
+                    result = left;
+                    break;
                   default:
-                    return undefined;
+                    break;
                 }
+
+                return result;
               },
             }),
           ],
