@@ -25,6 +25,9 @@ const buildWireInvocation = (id) => {
       invoke: {
         src: "wireMachine",
         systemId: id,
+        input: {
+          id
+        }
       },
     },
   };
@@ -36,11 +39,16 @@ const buildGateInvocation = (initialContext: {
   wireOut: string;
 }) => {
   const { wiresIn, operator, wireOut } = initialContext;
-  const [, right] = wiresIn;
+  const [left, right] = wiresIn;
 
   let valuesIn: (number | undefined)[] = [undefined, undefined];
 
-  // If the right side is a number, we don't need to wire it in (only for LSHIFT, RSHIFT)
+  if (left?.match(/^\d+$/)) {
+    valuesIn[0] = parseInt(left);
+  } else {
+    wiresIn[0] = left;
+  }
+  
   if (right?.match(/^\d+$/)) {
     valuesIn[1] = parseInt(right);
   } else {
