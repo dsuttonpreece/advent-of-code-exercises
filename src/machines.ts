@@ -5,9 +5,14 @@ export const signalMachine = createMachine(
   {
     /** @xstate-layout N4IgpgJg5mDOIC5SwJZQHYEMA2A6ACmOhCulAMQDaADALqKgAOA9qgC4rPoMgAeiARgCsQ3ABYAbNQCcYgBwBmaQCYRy5QHYANCACegudVzKx06XNMCBy6RKEBfRzvTMIcHqgw4eLdp25IfIgAtBI6+gjBomYxsbFyEk4gnlh4hMSkUD6sKBxcPPwIYsrhghrSxkLU1RryYiLUQhpJKTi4ACJcYNl++YGFqkZCknIq1RJiCgJyQqUIwmLi8ULqGuXSjo5AA */
     id: "signal",
-    context: {} as {
-      wireOut: string;
-      out: number;
+    schema: {
+      context: {} as {
+        wireOut: string;
+        out: number;
+      },
+      event: {
+
+      }as {}
     },
     initial: "Pending",
     entry: [
@@ -49,6 +54,7 @@ export const signalMachine = createMachine(
 );
 
 export const wireMachine = createMachine({
+  /** @xstate-layout N4IgpgJg5mDOIC5QHcCWAnMA6ACmAdhKvlAMQCCAIpQPoDCA8gHJMCidAKgJLMDaADAF1EoAA4B7WKgAuqcfhEgAHogAsAJiz9tO3TvUAaEAE9EADgCMWAKy6L6gGzWLAZgeOAvh6NpMuAkQkpFxMOACqHALCSCASUrLyiioI6qr8WKoO-ACcbvwOqmYO2daqRqYIFtbZGQDsTsUu2Q4Wudle3iD44hBwir5ginEycgoxyQC01ljZs3Pzc7XZ5YgTDlp6m9q1Xj4Y2HiExFBDkiOJ4+aqNpsu6vxm2epmK5VmmiUurtZmzjnNuxAAywlHkgxiwwSY1AyRc1k0+VS2Xeqg06nRZRMiCqZiw9y+rVqtRccNU1g6HiAA */
   id: "wire",
   initial: "Pending",
   context: { connections: [] } as {
@@ -95,6 +101,8 @@ export const wireMachine = createMachine({
 
 export const gateMachine = createMachine(
   {
+    tsTypes: {} as import("./machines.typegen").Typegen2,
+    /** @xstate-layout N4IgpgJg5mDOIC5RQIYBcwDoAKYB2EAlnlAMQBKAogMoDyAMgGqUD6dAquQMKsAqtLAJIA5bO14BtAAwBdRKAAOAe1iE0hJXnkgAHogAsAJkxTTZ82YCM+gDQgAnokuGAHJn0BOLwHYArADYAZkNDAI8AX3C7VAwcfCISUmk5JBBlVXVNbT0EQMt-d0MPf18PfUCPAKlfO0cEQ39vd188qW9-KUsXD0tvSOj0LC4UABsAYwBXEfRiMmTtdLUNLVSc330mkv9DS0CSlu9axEN9fXd29e9vSylA-UtKyKiQPCUIOG0YsAWVJazVxAAWl8mC8YPB4Jc-iOCEBBQsCNM1n6IC+cQIsx+GWW2UQXkw3kCLkM1yCRn83RhIQ8oJaNxcnX0Uh6-n0KLRw3GUxmJCxfxWoBy90smF8ll8pV23kqgVuNQcx38BX0dK6t2cnhc7MGmAAIppvqlFpkBbpECUaaErt4QtUPETDFT7gTblIjAz9C57k9wkA */
     id: "gate",
     initial: "Pending",
     context: {} as {
@@ -157,13 +165,12 @@ export const gateMachine = createMachine(
           {
             target: "Calculating",
             guard: ({ context }) => {
-              const areAllInputsNumbers = context.in
-                ?.map((value) => Number.isInteger(value))
-                .every(Boolean);
+              const [left, right] = context.wiresIn
 
-              const areThereMoreInputsThanWires = context.in?.length >= context.wiresIn.length;
+              const isLeftResolved = !left || Number.isInteger(context.in[0])
+              const isRightResolved = !right || Number.isInteger(context.in[1])
 
-              return areAllInputsNumbers && areThereMoreInputsThanWires;
+              return isLeftResolved && isRightResolved;
             },
           },
         ],
